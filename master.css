@@ -1,0 +1,368 @@
+*{
+     margin: 0px;
+     padding: 0px;
+     box-sizing: border-box;
+}
+html, body {
+     margin: 0;
+     padding: 0;
+     width: 100%;
+   
+     color: white;
+
+   
+}
+
+
+body {
+     cursor: crosshair;
+     font-family: Poppins;
+     background-color: #101010;
+     overflow-x: hidden;
+    
+    
+}
+
+nav{
+     margin: 0px;
+     padding: 0px;
+     display: flex;
+     justify-content: space-around;
+     align-items: center;
+}
+
+.menu ul li{
+     padding: 15px 15px 15px;
+     list-style-type: none;
+}
+.logo h2{
+     color: white;
+     font-size: 1.6rem;
+}
+.menu ul{
+     display: flex;
+     justify-content: center;
+     align-items: center;
+}
+.menu ul li a{
+     text-decoration: none;
+     color: white;
+     
+}
+/* .part-1{
+     height: 100vh;
+} */
+/* .cont{
+     height: 100vh;
+     
+} */
+.texts{
+     display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 10vh;
+  
+}
+
+.head1{
+     color: white;
+     font-size: 5rem;
+}
+.para{
+     color: white;
+     margin-top: 10px;
+}
+
+.image{
+     margin-top: 15vh;
+}
+
+.bigtext{
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     flex-direction: column;
+
+}
+.texts p{
+     font-size: 1.5rem;
+     opacity: 0.5;
+}
+.bigtext h2{
+     font-size: 4rem;
+}
+.bigtext p{
+     font-size: 1.5rem;
+     width: 70%;
+}
+
+
+
+/* .part-1{
+     height: 100vh;
+} */
+
+.work{
+     margin-top: 15vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.work h2{
+     font-size: 4rem;
+}
+
+
+.outline, .eye{
+     fill-opacity: 0;
+     stroke: white;
+     stroke-width: 10px;
+     stroke-dashoffset: 0;
+     stroke-dasharray: 8000;
+     animation: outline 4s ease-in-out;
+}
+
+@keyframes outline{
+     0%{
+          stroke-dashoffset: 8000;
+     }
+     100%{
+          stroke-dashoffset: 0;
+     }
+}
+
+
+.out{
+     fill-opacity: 0;
+     stroke: white;
+     stroke-width: 10px;
+     stroke-dashoffset: 0;
+     stroke-dasharray: 8000;
+     animation: outline 4s ease-in-out;
+}
+
+
+.proj-img img{
+     width: 50%;
+     position: absolute;
+     z-index: -10;
+     border-radius: 18px;
+}
+.proj-img{
+     width: 50%;
+}
+
+.proj-img h2{
+     color: white;
+
+}
+
+/* .proj-cont{
+     width: 50%;
+} */
+
+.link{
+     text-decoration: none;
+     
+}
+.link h2{
+     text-decoration: none;
+     text-align: center;
+     padding: 15px;
+
+}
+   
+.bigtext{
+     margin-top: 25vh;
+}
+
+.card-holder{
+     height: 100vh;
+     display: flex;
+     justify-content: center;
+     margin-top: 20vh;
+}
+
+hr{
+     width: 100%;
+    transform: rotate(-4deg);
+    height: 8px;
+    /* fill: white; */
+    background-color: white;
+}
+#big{
+     font-size: 4rem;
+}
+
+.card-6 a{
+     text-decoration: none;
+     color: white;
+}
+
+/* .work-info{
+     height: 80vh;
+
+} */
+
+.center-w h1,p{
+     color: white;
+}
+
+.center-w h1{
+     text-align: center;
+     margin-top: 10vh;
+     font-size: 4rem;
+}
+.center-w{
+     height: 70vh;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     flex-direction: column;
+}
+
+.center-w p{
+     text-align: center;
+     /* display: flex; */
+     /* justify-content: center; */
+     /* align-items: center; */
+     margin-left: 10vh;
+     margin-right: 10vh;
+     font-size: 1.5rem;
+     opacity: 0.5;
+}
+
+/* .wrap{
+     height: 50vh;
+} */
+
+.sign h2{
+     text-align: center;
+     font-size: 4rem;
+     margin-top: 10vh;
+}
+
+form{
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     margin-top: 8vh;
+}
+
+#imp{
+     line-height: 8vh;
+    width: 48vh;
+    font-family: Poppins;
+    font-size: 1.5rem;
+}
+
+#get-head{
+     margin-right: 2vh;
+}
+
+.socialicons a img{
+     width: 35px;
+}
+.socialicons a{
+     margin: 0px 20px;
+}
+footer{
+     height: 30vh;
+     background-color: black;
+}
+
+.socialicons{     display: flex;
+    justify-content: center;
+    padding-top: 6vh;
+}
+.comeagain h2{
+     text-align: center;
+     font-size: 1rem;
+}
+
+.comeagain{
+     height: 20vh;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     background-color: black;
+     opacity: 0.5;
+}
+
+.new-text{
+     margin-bottom: 10vh;
+}
+.head1 {
+     text-align: center;
+}
+.para{
+     text-align: center;
+}
+/* responsive code */
+
+
+@media only screen and (max-width: 500px) {
+     nav {
+          flex-direction: column;
+      
+     }
+     .para, .head1{
+          text-align: center;
+
+     }
+     .proj-img, .proj-img img{
+          width: 100%;
+     }
+     .new-text{
+          margin-bottom: 50px;
+     }
+     .socialicons{
+          align-items: center;
+     }
+   }
+@media only screen and (max-width: 400px) {
+     body{
+          overflow-x: hidden;
+          width: 100%;
+     }
+   .head1{
+     
+    font-size: 4rem;
+
+
+   }
+   .card-holder{
+     height: 70vh;
+
+   }
+   .center-w h1{
+     margin-top: 15vh;
+     font-size: 3rem;
+
+   }
+   .sign h2{
+     font-size: 3rem;
+   }
+   #get-head{
+     margin-right: 0vh;
+   }
+   #imp{
+     width: 35vh;
+
+   }
+   .socialicons h2{
+     font-size: 1rem;
+    margin-left: 10px;
+   }
+   .link h2{
+     font-size: 1rem;
+   }
+   .texts {
+     height: 65vh;
+   }
+   .center-w p{
+     margin-left: 0;
+     margin-right: 0;
+   }
+   }
