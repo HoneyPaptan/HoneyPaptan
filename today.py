@@ -25,6 +25,14 @@ def format_plural(unit):
     return 's' if unit != 1 else ''
 
 
+def humanize(n):
+    if n >= 1_000_000:
+        return f'{n / 1_000_000:.1f}'.rstrip('0').rstrip('.') + 'M'
+    if n >= 100_000:
+        return f'{round(n / 1_000):,}K'
+    return '{:,}'.format(n)
+
+
 def simple_request(func_name, query, variables):
     request = requests.post('https://api.github.com/graphql', json={'query': query, 'variables': variables}, headers=HEADERS)
     if request.status_code == 200:
@@ -362,7 +370,7 @@ if __name__ == '__main__':
     follower_data, follower_time = perf_counter(follower_getter, USER_NAME)
 
     for index in range(len(total_loc) - 1):
-        total_loc[index] = '{:,}'.format(total_loc[index])
+        total_loc[index] = humanize(total_loc[index])
 
     svg_overwrite('dark_mode.svg', age_data, commit_data, star_data, repo_data, contrib_data, follower_data, total_loc[:-1])
     svg_overwrite('light_mode.svg', age_data, commit_data, star_data, repo_data, contrib_data, follower_data, total_loc[:-1])
