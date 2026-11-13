@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile Studio</title>
+<style>
+:root{--bg:#0a0a0a;--fg:#e5e5e5;--soft:#8a8a8a;--edge:#262626;--ctl:#161616;--focus:#f5b83d}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:13px/1.4 Geist,Inter,system-ui,sans-serif;overscroll-behavior-x:none;overflow:hidden}
+#view{position:fixed;inset:0;overflow:hidden;cursor:default;touch-action:none;overscroll-behavior:none;outline:none}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.item{position:absolute}
+.bar{display:flex;align-items:center;gap:6px;height:28px}
+.name{all:unset;cursor:default;color:var(--soft);font-size:12.5px;padding:2px 4px;border-radius:4px}
+.name:hover,.name:focus-visible{color:var(--fg)}
+.name:focus-visible,.grip:focus-visible,.tools button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.copied{color:var(--focus);font-size:12px}
+.grip{all:unset;cursor:default;color:var(--soft);width:18px;height:18px;display:grid;place-items:center;border-radius:4px;font-size:14px;letter-spacing:-2px}
+.grip:hover{color:var(--fg);background:var(--ctl)}
+.frame{outline:1px solid var(--edge);display:block}
+.frame img{display:block}
+.frame a{display:block;cursor:pointer}
+.gh .row a{display:inline-block;cursor:pointer}
+.gh .chips{line-height:0;margin:12px 0 0}
+.gh .chips a{display:inline-block;cursor:pointer}
+.gh .chips img{display:inline-block}
+.gh{background:#0d1117;padding:24px 16px;box-sizing:border-box;font:14px/1.5 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#e6edf3}
+.gh p{text-align:center;margin:16px 0}
+.gh a{color:#4493f8;text-decoration:underline}
+.gh .row{display:flex;flex-wrap:wrap;justify-content:center;line-height:0}
+.gh .row img{display:inline-block}
+.tools{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;align-items:center;background:var(--ctl);border:1px solid var(--edge);border-radius:999px;padding:4px}
+.tools button{all:unset;cursor:default;padding:6px 12px;border-radius:999px;color:var(--fg);font-size:12.5px}
+.tools button:hover{background:#222}
+.tools output{min-width:44px;text-align:center;color:var(--soft);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.fallback{user-select:text;cursor:text;color:var(--fg);background:var(--ctl);padding:2px 6px;border-radius:4px}
+</style>
+</head>
+<body>
+<div id="view" tabindex="0" aria-label="Profile canvas. Drag empty space or use arrow keys to pan, plus and minus to zoom, F to fit, 0 to reset.">
+  <div id="world"></div>
+</div>
+<div class="tools" role="toolbar" aria-label="Canvas controls">
+  <button id="zout" aria-label="Zoom out">−</button><output id="zval">100%</output><button id="zin" aria-label="Zoom in">+</button>
+  <button id="fit">Fit</button><button id="reset">Reset</button><button id="replay">Replay</button>
+</div>
+<p id="hint" class="sr">Press arrow keys to move this item. Hold Shift for bigger steps.</p>
+<div id="live" class="sr" aria-live="polite"></div>
+<script src="icons.js"></script>
+<script src="metrics.js"></script>
+<script src="profile.js"></script>
+<script>
+const P = window.Profile;
+const svgUrl = (s) => URL.createObjectURL(new Blob([s], { type: 'image/svg+xml' }));
+
+const ASSETS = {};
+function buildAssets() {
+  Object.values(ASSETS).forEach(URL.revokeObjectURL);
+  ASSETS.hero = svgUrl(P.hero());
+  ASSETS.workbench = svgUrl(P.workbench());
+  P.CONFIG.tiles.forEach((it) => (ASSETS[it.id] = svgUrl(P.tile(it))));
+  P.CONFIG.links.forEach((l) => (ASSETS[P.chipFile(l)] = svgUrl(P.linkChip(l))));
+}
+
+function imgPreview(key, w, h, href) {
+  const img = () => `<img src="${ASSETS[key]}" width="${w}" height="${h}" alt="">`;
+  return href ? () => `<a href="${href}" target="_blank" rel="noopener">${img()}</a>` : img;
+}
+
+const ext = (href, inner, cls = '') => `<a href="${href}" target="_blank" rel="noopener"${cls}>${inner}</a>`;
+
+function readmePreview(heroKey, withChips) {
+  return () => {
+    const c = P.CONFIG;
+    const hero = heroKey === 'workbench' ? ext(c.home, `<img src="${ASSETS.workbench}" width="846" alt="">`) : `<img src="${ASSETS.hero}" width="846" alt="">`;
+    const chips = withChips ? `<p class="chips">${c.links.map((l) => ext(l[1], `<img src="${ASSETS[P.chipFile(l)]}" height="40" alt="${l[0]}">`)).join('')}</p>` : '';
+    const tiles = c.tiles.map((it) => ext(it.href, `<img src="${ASSETS[it.id]}" width="${P.SIZES[it.size].w}" alt="">`)).join('');
+    return `<div class="gh" style="width:878px">${hero}${chips}<div class="row" style="margin-top:16px">${tiles}</div></div>`;
+  };
+}
+
+const TILE_X = 960, TILE_Y = 430;
+const REGISTRY = [
+  { id: 'readme', name: 'README · full page', w: 878, h: 780, x: 0, y: 0, render: readmePreview('hero', false) },
+  { id: 'readme-workbench', name: 'README · workbench + cards', w: 878, h: 800, x: 0, y: 900, render: readmePreview('workbench', true) },
+  { id: 'hero', name: 'Hero · terminal', w: 846, h: 378, x: TILE_X, y: 0, render: imgPreview('hero', 846, 378) },
+  { id: 'hero-workbench', name: 'Hero · workbench', w: 846, h: 340, x: TILE_X, y: 880, render: imgPreview('workbench', 846, 340, P.CONFIG.home) },
+  ...P.CONFIG.tiles.map((it, i) => {
+    const s = P.SIZES[it.size], bigCount = P.CONFIG.tiles.filter((t) => t.size === 'big').length;
+    const x = it.size === 'big' ? TILE_X + i * 443 : TILE_X + (i - bigCount) * 231;
+    const y = it.size === 'big' ? TILE_Y : TILE_Y + 232;
+    return { id: `tile-${it.id}`, name: `Tile · ${it.name}`, w: s.w, h: s.h, x, y, render: imgPreview(it.id, s.w, s.h, it.href) };
+  }),
+];
+
+const KEY = 'honey-profile-studio:canvas';
+const VERSION = 1;
+const LIM = { pos: 20000, zMin: 0.1, zMax: 4 };
+const finite = (n, lim) => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= lim;
+const clampZ = (z) => Math.min(LIM.zMax, Math.max(LIM.zMin, z));
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw || raw.length > 20000) return null;
+    const d = JSON.parse(raw);
+    if (!d || d.v !== VERSION) return null;
+    const cam = d.cam && finite(d.cam.x, LIM.pos * 4) && finite(d.cam.y, LIM.pos * 4) && finite(d.cam.z, LIM.zMax) && d.cam.z >= LIM.zMin ? d.cam : null;
+    const pos = {};
+    for (const it of REGISTRY) {
+      const p = d.pos && d.pos[it.id];
+      if (Array.isArray(p) && finite(p[0], LIM.pos) && finite(p[1], LIM.pos)) pos[it.id] = [p[0], p[1]];
+    }
+    return { cam, pos };
+  } catch { return null; }
+}
+
+const saved = load();
+const cam = saved?.cam ? { ...saved.cam } : { x: 40, y: 40, z: 1 };
+const pos = Object.fromEntries(REGISTRY.map((it) => [it.id, saved?.pos[it.id] ?? [it.x, it.y]]));
+
+let saveTimer = 0;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 300);
+}
+function flush() {
+  clearTimeout(saveTimer);
+  try { localStorage.setItem(KEY, JSON.stringify({ v: VERSION, cam, pos })); } catch {}
+}
+
+const view = document.getElementById('view');
+const world = document.getElementById('world');
+const zval = document.getElementById('zval');
+const live = document.getElementById('live');
+const nodes = {};
+
+let frame = 0;
+function paint() {
+  if (frame) return;
+  frame = requestAnimationFrame(() => {
+    frame = 0;
+    world.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.z})`;
+    zval.textContent = `${Math.round(cam.z * 100)}%`;
+  });
+}
+
+function placeItem(id) {
+  const [x, y] = pos[id];
+  nodes[id].style.transform = `translate(${x}px,${y - 28}px)`;
+}
+
+function mount() {
+  buildAssets();
+  for (const it of REGISTRY) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.dataset.id = it.id;
+    el.innerHTML = `<div class="bar"><button class="grip" aria-label="Move ${it.name}" aria-describedby="hint">⋮⋮</button><button class="name" title="Click to copy name">${it.name}</button><span class="copied" hidden>Copied</span></div><div class="frame" style="width:${it.w}px;min-height:${it.h}px">${it.render()}</div>`;
+    world.appendChild(el);
+    nodes[it.id] = el;
+    placeItem(it.id);
+    wireItem(it, el);
+  }
+}
+
+function replay() {
+  buildAssets();
+  for (const it of REGISTRY) nodes[it.id].querySelector('.frame').innerHTML = it.render();
+}
+
+async function copyName(it, el) {
+  const flag = el.querySelector('.copied');
+  try {
+    if (!navigator.clipboard) throw new Error('no clipboard');
+    await navigator.clipboard.writeText(it.name);
+    flag.hidden = false;
+    live.textContent = `Copied ${it.name}`;
+    setTimeout(() => (flag.hidden = true), 1200);
+  } catch {
+    flag.hidden = false;
+    flag.className = 'fallback';
+    flag.textContent = it.name;
+    const r = document.createRange();
+    r.selectNodeContents(flag);
+    getSelection().removeAllRanges();
+    getSelection().addRange(r);
+  }
+}
+
+let panned = false;
+function wireItem(it, el) {
+  const grip = el.querySelector('.grip');
+  const name = el.querySelector('.name');
+  name.addEventListener('click', (e) => { if (panned) { e.preventDefault(); return; } copyName(it, el); });
+  grip.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 50 : 10;
+    const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    e.stopPropagation();
+    pos[it.id] = [pos[it.id][0] + d[0], pos[it.id][1] + d[1]].map((v) => Math.max(-LIM.pos, Math.min(LIM.pos, v)));
+    placeItem(it.id);
+    save();
+  });
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || spaceHeld || pointers.size) return;
+    e.stopPropagation();
+    grip.setPointerCapture(e.pointerId);
+    const start = [e.clientX, e.clientY], from = [...pos[it.id]];
+    const move = (ev) => {
+      pos[it.id] = [from[0] + (ev.clientX - start[0]) / cam.z, from[1] + (ev.clientY - start[1]) / cam.z].map((v) => Math.max(-LIM.pos, Math.min(LIM.pos, v)));
+      placeItem(it.id);
+    };
+    const end = () => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', end);
+      grip.removeEventListener('pointercancel', end);
+      grip.removeEventListener('lostpointercapture', end);
+      save();
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    grip.addEventListener('lostpointercapture', end);
+  });
+}
+
+function zoomAt(sx, sy, z) {
+  const nz = clampZ(z);
+  cam.x = sx - ((sx - cam.x) * nz) / cam.z;
+  cam.y = sy - ((sy - cam.y) * nz) / cam.z;
+  cam.z = nz;
+  paint();
+  save();
+}
+const zoomCenter = (f) => zoomAt(view.clientWidth / 2, view.clientHeight / 2, cam.z * f);
+
+function bounds() {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const it of REGISTRY) {
+    const el = nodes[it.id], [x, y] = pos[it.id];
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y - 28);
+    x1 = Math.max(x1, x + el.offsetWidth); y1 = Math.max(y1, y - 28 + el.offsetHeight);
+  }
+  return { x0, y0, x1, y1 };
+}
+function fitAll() {
+  const b = bounds(), pad = 48, W = view.clientWidth, H = view.clientHeight - 64;
+  const z = clampZ(Math.min((W - pad * 2) / (b.x1 - b.x0), (H - pad * 2) / (b.y1 - b.y0)));
+  cam.z = z;
+  cam.x = (W - (b.x1 - b.x0) * z) / 2 - b.x0 * z;
+  cam.y = (H - (b.y1 - b.y0) * z) / 2 - b.y0 * z;
+  paint();
+  save();
+}
+function resetCam() { cam.x = 40; cam.y = 40; cam.z = 1; paint(); save(); }
+
+let spaceHeld = false;
+const editable = (el) => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(el.tagName));
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !editable(document.activeElement)) { spaceHeld = true; e.preventDefault(); }
+});
+addEventListener('keyup', (e) => { if (e.code === 'Space') spaceHeld = false; });
+const clearHeld = () => { spaceHeld = false; endPan(); };
+addEventListener('blur', clearHeld);
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearHeld(); flush(); } });
+addEventListener('pagehide', flush);
+
+view.addEventListener('keydown', (e) => {
+  if (e.target !== view) return;
+  const k = e.key, s = e.shiftKey ? 200 : 60;
+  const pan = { ArrowLeft: [s, 0], ArrowRight: [-s, 0], ArrowUp: [0, s], ArrowDown: [0, -s] }[k];
+  if (pan) { cam.x += pan[0]; cam.y += pan[1]; paint(); save(); e.preventDefault(); }
+  else if (k === '+' || k === '=') zoomCenter(1.2);
+  else if (k === '-') zoomCenter(1 / 1.2);
+  else if (k === '0') resetCam();
+  else if (k === 'f' || k === 'F') fitAll();
+});
+
+const pointers = new Map();
+let pan = null, pinch = null;
+function endPan() {
+  if (pan) { try { view.releasePointerCapture(pan.id); } catch {} pan = null; save(); }
+  pinch = null;
+  pointers.clear();
+  setTimeout(() => (panned = false), 0);
+}
+const empty = (t) => t === view || t === world || t.classList?.contains('item');
+
+view.addEventListener('pointerdown', (e) => {
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2 };
+    pan = null;
+    return;
+  }
+  const explicit = e.button === 1 || (e.button === 0 && spaceHeld);
+  if (explicit || (e.button === 0 && empty(e.target))) {
+    if (e.button === 1 || explicit) e.preventDefault();
+    pan = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    view.setPointerCapture(e.pointerId);
+    if (empty(e.target)) view.focus({ preventScroll: true });
+  }
+});
+view.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a[0] - b[0], a[1] - b[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    cam.x += mx - pinch.mx; cam.y += my - pinch.my;
+    zoomAt(mx, my, cam.z * (d / pinch.d));
+    pinch = { d, mx, my };
+    panned = true;
+    return;
+  }
+  if (!pan || e.pointerId !== pan.id) return;
+  const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
+  if (Math.abs(dx) + Math.abs(dy) > 2) { pan.moved = true; panned = true; }
+  cam.x += dx; cam.y += dy; pan.x = e.clientX; pan.y = e.clientY;
+  paint();
+});
+const up = (e) => {
+  pointers.delete(e.pointerId);
+  if (pinch && pointers.size < 2) pinch = null;
+  if (pan && e.pointerId === pan.id) { try { view.releasePointerCapture(pan.id); } catch {} pan = null; save(); setTimeout(() => (panned = false), 0); }
+  if (!pointers.size && pinch === null && !pan) setTimeout(() => (panned = false), 0);
+};
+view.addEventListener('pointerup', up);
+view.addEventListener('pointercancel', up);
+view.addEventListener('lostpointercapture', (e) => { if (pan && e.pointerId === pan.id) up(e); });
+view.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
+view.addEventListener('click', (e) => { if (panned) { e.preventDefault(); e.stopPropagation(); } }, true);
+
+view.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = view.getBoundingClientRect();
+  if (e.ctrlKey || e.metaKey) {
+    const scale = e.deltaMode === 1 ? 0.05 : 0.0025;
+    zoomAt(e.clientX - r.left, e.clientY - r.top, cam.z * Math.exp(-e.deltaY * scale));
+    return;
+  }
+  const k = e.deltaMode === 1 ? 16 : 1;
+  cam.x -= e.deltaX * k; cam.y -= e.deltaY * k;
+  paint();
+  save();
+}, { passive: false });
+
+view.addEventListener('focusin', (e) => {
+  const item = e.target.closest?.('.item');
+  if (!item) return;
+  const r = item.getBoundingClientRect(), W = view.clientWidth, H = view.clientHeight;
+  if (r.right < 0 || r.left > W || r.bottom < 0 || r.top > H) {
+    cam.x += W / 2 - (r.left + r.width / 2); cam.y += H / 2 - (r.top + r.height / 2); paint(); save();
+  }
+});
+
+document.getElementById('zin').onclick = () => zoomCenter(1.2);
+document.getElementById('zout').onclick = () => zoomCenter(1 / 1.2);
+document.getElementById('fit').onclick = fitAll;
+document.getElementById('reset').onclick = resetCam;
+document.getElementById('replay').onclick = replay;
+
+mount();
+paint();
+if (!saved?.cam) requestAnimationFrame(() => requestAnimationFrame(fitAll));
+</script>
+</body>
+</html>
