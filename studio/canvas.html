@@ -29,6 +29,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:13px/1.
 .gh a{color:#4493f8;text-decoration:underline}
 .gh .row{display:flex;flex-wrap:wrap;justify-content:center;line-height:0}
 .gh .row img{display:inline-block}
+.gh h3{font-size:1.25em;font-weight:600;line-height:1.25;margin:24px 0 16px}
+.gh ul{margin:0 0 16px;padding-left:2em}
+.gh li+li{margin-top:.25em}
 .tools{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;align-items:center;background:var(--ctl);border:1px solid var(--edge);border-radius:999px;padding:4px}
 .tools button{all:unset;cursor:default;padding:6px 12px;border-radius:999px;color:var(--fg);font-size:12.5px}
 .tools button:hover{background:#222}
@@ -76,14 +79,15 @@ function readmePreview(heroKey, withChips) {
     const hero = heroKey === 'workbench' ? ext(c.home, `<img src="${ASSETS.workbench}" width="846" alt="">`) : `<img src="${ASSETS.hero}" width="846" alt="">`;
     const chips = withChips ? `<p class="chips">${c.links.map((l) => ext(l[1], `<img src="${ASSETS[P.chipFile(l)]}" height="40" alt="${l[0]}">`)).join('')}</p>` : '';
     const tiles = c.tiles.map((it) => ext(it.href, `<img src="${ASSETS[it.id]}" style="width:100%;display:block" alt="">`, ` style="width:${it.size === 'big' ? '50%' : '25%'}"`)).join('');
-    return `<div class="gh" style="width:878px">${hero}${chips}<div class="row" style="margin-top:16px">${tiles}</div></div>`;
+    const working = `<h3>Currently working on</h3><ul>${c.working.map(([name, href, what]) => `<li>${ext(href, name)}: ${what}</li>`).join('')}</ul>`;
+    return `<div class="gh" style="width:878px">${hero}${chips}<div class="row" style="margin-top:16px">${tiles}</div>${working}</div>`;
   };
 }
 
 const TILE_X = 960, TILE_Y = 430;
 const REGISTRY = [
-  { id: 'readme', name: 'README · full page', w: 878, h: 780, x: 0, y: 0, render: readmePreview('hero', false) },
-  { id: 'readme-workbench', name: 'README · workbench + cards', w: 878, h: 800, x: 0, y: 900, render: readmePreview('workbench', true) },
+  { id: 'readme', name: 'README · full page', w: 878, h: 920, x: 0, y: 0, render: readmePreview('hero', false) },
+  { id: 'readme-workbench', name: 'README · workbench + cards', w: 878, h: 940, x: 0, y: 1040, render: readmePreview('workbench', true) },
   { id: 'hero', name: 'Hero · terminal', w: 846, h: 378, x: TILE_X, y: 0, render: imgPreview('hero', 846, 378) },
   { id: 'hero-workbench', name: 'Hero · workbench', w: 846, h: 340, x: TILE_X, y: 880, render: imgPreview('workbench', 846, 340, P.CONFIG.home) },
   ...P.CONFIG.tiles.map((it, i) => {
