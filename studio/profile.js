@@ -439,7 +439,7 @@ ${frame}${rail.join('')}${bar}${bubble}${thinking}${tools}${answer}${composer}
 
   function readme(cfg = CONFIG, path = (f) => `assets/profile/${f}`) {
     const chips = cfg.links.map((l) => `<a href="${l[1]}"><img src="${path(chipFile(l))}" height="40" alt="${esc(l[0])}"></a>`).join('');
-    const tiles = cfg.tiles.map((it) => `<a href="${it.href}"><img src="${path(`tile-${it.id}.svg`)}" width="${SIZES[it.size].w}" alt="${esc(`${it.name}: ${it.desc}.`)}"></a>`).join('');
+    const tiles = cfg.tiles.map((it) => `<a href="${it.href}"><img src="${path(`tile-${it.id}.svg`)}" width="${it.size === 'big' ? '50%' : '25%'}" alt="${esc(`${it.name}: ${it.desc}.`)}"></a>`).join('');
     return `<a href="${cfg.home}"><img src="${path('hero.svg')}" width="100%" alt="${esc(`${cfg.name}, ${cfg.role}. ${cfg.about.join(' ')} Stack: ${cfg.stack}.`)}"></a>
 
 <p align="center">${chips}</p>

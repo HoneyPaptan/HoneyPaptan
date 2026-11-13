@@ -75,7 +75,7 @@ function readmePreview(heroKey, withChips) {
     const c = P.CONFIG;
     const hero = heroKey === 'workbench' ? ext(c.home, `<img src="${ASSETS.workbench}" width="846" alt="">`) : `<img src="${ASSETS.hero}" width="846" alt="">`;
     const chips = withChips ? `<p class="chips">${c.links.map((l) => ext(l[1], `<img src="${ASSETS[P.chipFile(l)]}" height="40" alt="${l[0]}">`)).join('')}</p>` : '';
-    const tiles = c.tiles.map((it) => ext(it.href, `<img src="${ASSETS[it.id]}" width="${P.SIZES[it.size].w}" alt="">`)).join('');
+    const tiles = c.tiles.map((it) => ext(it.href, `<img src="${ASSETS[it.id]}" style="width:100%;display:block" alt="">`, ` style="width:${it.size === 'big' ? '50%' : '25%'}"`)).join('');
     return `<div class="gh" style="width:878px">${hero}${chips}<div class="row" style="margin-top:16px">${tiles}</div></div>`;
   };
 }
