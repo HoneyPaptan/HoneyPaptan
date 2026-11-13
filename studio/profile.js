@@ -42,6 +42,11 @@
       { id: 'coffee', size: 'small', name: 'coffee anatomy', desc: 'An espresso machine, explained', right: { label: 'new' }, href: 'https://github.com/HoneyPaptan/coffee-anatomy' },
       { id: 'site', size: 'small', name: 'Portfolio', desc: 'Work, writing and links', right: { label: 'site' }, href: 'https://honeypaptan.vercel.app' },
     ],
+    working: [
+      ['hp', 'https://github.com/HoneyPaptan/hp-harness', 'a coding agent harness that resumes from its journal after any crash'],
+      ['coffee anatomy', 'https://github.com/HoneyPaptan/coffee-anatomy', 'an interactive teardown of an espresso machine'],
+      ['VoiceGraph', 'https://github.com/HoneyPaptan/voicegraph', 'more spoken triggers and integrations for voice-built workflows'],
+    ],
   };
 
   const MONO = "PM,'Geist Mono','GeistMono NF','JetBrains Mono',ui-monospace,Menlo,Consolas,monospace";
@@ -440,11 +445,16 @@ ${frame}${rail.join('')}${bar}${bubble}${thinking}${tools}${answer}${composer}
   function readme(cfg = CONFIG, path = (f) => `assets/profile/${f}`) {
     const chips = cfg.links.map((l) => `<a href="${l[1]}"><img src="${path(chipFile(l))}" height="40" alt="${esc(l[0])}"></a>`).join('');
     const tiles = cfg.tiles.map((it) => `<a href="${it.href}"><img src="${path(`tile-${it.id}.svg`)}" width="${it.size === 'big' ? '50%' : '25%'}" alt="${esc(`${it.name}: ${it.desc}.`)}"></a>`).join('');
+    const working = cfg.working.map(([name, href, what]) => `- [${name}](${href}): ${what}`).join('\n');
     return `<a href="${cfg.home}"><img src="${path('hero.svg')}" width="100%" alt="${esc(`${cfg.name}, ${cfg.role}. ${cfg.about.join(' ')} Stack: ${cfg.stack}.`)}"></a>
 
 <p align="center">${chips}</p>
 
 <p align="center">${tiles}</p>
+
+### Currently working on
+
+${working}
 `;
   }
 
