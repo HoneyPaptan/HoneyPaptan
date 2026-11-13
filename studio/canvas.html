@@ -99,7 +99,7 @@ const REGISTRY = [
 ];
 
 const KEY = 'honey-profile-studio:canvas';
-const VERSION = 1;
+const VERSION = 2;
 const LIM = { pos: 20000, zMin: 0.1, zMax: 4 };
 const finite = (n, lim) => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= lim;
 const clampZ = (z) => Math.min(LIM.zMax, Math.max(LIM.zMin, z));
